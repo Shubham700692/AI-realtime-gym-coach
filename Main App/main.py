@@ -2,6 +2,23 @@ import streamlit as st
 import os
 from dotenv import load_dotenv
 load_dotenv()
+
+# ---------------------------------------------------------------------------
+# Silence noisy headless-server logs from mediapipe / absl / google-genai.
+# MUST happen BEFORE any import of mediapipe or google-genai (they read these
+# environment variables at import time).
+# ---------------------------------------------------------------------------
+os.environ.setdefault("MEDIAPIPE_DISABLE_GPU", "1")
+os.environ.setdefault("GLOG_minloglevel", "2")
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
+os.environ.setdefault("ABSL_MIN_LOG_LEVEL", "2")
+
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    message=r"(?s).*automatic function calling.*AFC.*generate_content.*",
+)
+
 import time
 import pandas as pd
 from services.auth.login_wall import render_login_wall
@@ -13,7 +30,6 @@ from streamlit_webrtc import webrtc_streamer, WebRtcMode
 from services.vision.exercise_video_processor import VideoProcessorClass
 from services.tracking.metrics import sync_metrics_update
 from services.persistence.exercise_repository import get_users_exercises
-from groq import Groq
 from services.coaching.llm import LLMCoach
 from services.coaching.tts import TextToSpeech
 from services.coaching.voice_pipeline import VoicePipeline, autoplay_audio
@@ -40,22 +56,11 @@ def main():
 
     if "voice_pipeline" not in st.session_state:
         try:
-            api_key = os.environ.get("GROQ_API_KEY", "")
-            model_env = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b") 
-
-            if not api_key and hasattr(st, "secrets") and "GROQ_API_KEY" in st.secrets:
-                api_key = st.secrets["GROQ_API_KEY"]
-        
-            groq_client = Groq(api_key=api_key)
-            llm_coach = LLMCoach(groq_client)
-        
-            # Explicitly align the tracking logic state if needed
-            llm_coach.model = model_env 
-        
+            llm_coach = LLMCoach()
             tts = TextToSpeech()
             st.session_state.voice_pipeline = VoicePipeline(llm_coach, tts)
         except Exception as e:
-            st.error(f"Failed to initialize Voice Pipeline: {e}")
+            print(f"Failed to initialize Voice Pipeline: {e}")
             st.session_state.voice_pipeline = None
 
 
@@ -203,7 +208,12 @@ def main():
     st.markdown("#### Real-time pose detection with proactive AI voice coaching")
  
     if st.session_state.get("audio_to_play"):
-        autoplay_audio(st.session_state.audio_to_play)
+        try:
+            vp = st.session_state.get("voice_pipeline")
+            audio_key = vp.next_cue_key() if vp is not None else f"coach-audio-{int(time.time()*1000)}"
+            autoplay_audio(st.session_state.audio_to_play, key=audio_key)
+        finally:
+            st.session_state.audio_to_play = None
 
     if st.session_state.get("coach_feedback"):
         st.markdown("")
