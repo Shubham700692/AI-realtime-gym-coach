@@ -4,9 +4,8 @@ streamlit-webrtc>=0.47.0
 
 # Computer Vision & AI Pose Tracking
 mediapipe>=0.10.14
-opencv-python-headless
 opencv-python-headless>=4.10.0.84
-
+opencv-python-headless
 # Data Processing & Environment
 pandas>=2.2.0
 python-dotenv>=1.0.1
