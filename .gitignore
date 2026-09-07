@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+.env/
+
+Main App/.env
+Main App/.streamlit/secrets.toml
+
+.env
+.streamlit/secrets.toml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Database
+Main App/data.db
+Main App/venv
+Main App/.venv
+# Logs
+*.log

@@ -1,0 +1,16 @@
+# Streamlit & Real-time Web Deployment
+streamlit>=1.35.0
+streamlit-webrtc>=0.47.0
+
+# Computer Vision & AI Pose Tracking
+mediapipe>=0.10.14
+opencv-python-headless>=4.10.0.84
+
+# Data Processing & Environment
+pandas>=2.2.0
+python-dotenv>=1.0.1
+
+# LLM & API Integration
+groq>=0.9.0
+httpx>=0.27.0
+gtts==2.5.3
