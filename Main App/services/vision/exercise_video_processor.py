@@ -1,4 +1,6 @@
 import os
+import sys
+import traceback
 import cv2
 import av
 import numpy as np
@@ -7,6 +9,7 @@ import threading
 from streamlit_webrtc import VideoProcessorBase
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+from mediapipe.tasks.python.core import BaseOptions as _CoreBaseOptions
 from detectors.squat import SquatDetector
 from detectors.pushup import PushUpDetector
 from detectors.biceps_curl import BicepsCurlDetector
@@ -15,14 +18,36 @@ from detectors.lunges import LungesDetector
 from services.config.workout_config import POSE_CONNECTIONS
 
 
+_THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(_THIS_DIR)))
+_MODEL_PATH_CANDIDATES = (
+    os.path.join(_PROJECT_ROOT, "Main App", "ml_models", "pose_landmarker_full.task"),
+    os.path.join(_PROJECT_ROOT, "ml_models", "pose_landmarker_full.task"),
+    os.path.join(os.getcwd(), "Main App", "ml_models", "pose_landmarker_full.task"),
+    os.path.join(os.getcwd(), "ml_models", "pose_landmarker_full.task"),
+)
+
+
 class VideoProcessorClass(VideoProcessorBase):
     def __init__(self):
         self._lock = threading.Lock()
         self._latest_metrics = None
         self._exercise_type = "Squats"
 
-        model_path = os.path.join(os.getcwd(), "ml_models", "pose_landmarker_full.task")
-        base_option = python.BaseOptions(model_asset_path=model_path)
+        model_path = None
+        for candidate in _MODEL_PATH_CANDIDATES:
+            if os.path.isfile(candidate):
+                model_path = candidate
+                break
+        if model_path is None:
+            raise FileNotFoundError(
+                "pose_landmarker_full.task not found. Searched: " + ", ".join(_MODEL_PATH_CANDIDATES)
+            )
+
+        base_option = python.BaseOptions(
+            model_asset_path=model_path,
+            delegate=_CoreBaseOptions.Delegate.CPU,
+        )
 
         options = vision.PoseLandmarkerOptions(
             base_options=base_option,
@@ -33,7 +58,31 @@ class VideoProcessorClass(VideoProcessorBase):
             output_segmentation_masks=False
         )
 
-        self._landmarker = vision.PoseLandmarker.create_from_options(options)
+        try:
+            self._landmarker = vision.PoseLandmarker.create_from_options(options)
+        except Exception as exc:
+            print("[VideoProcessorClass] PoseLandmarker.create_from_options FAILED:", file=sys.stderr)
+            print(f"[VideoProcessorClass]   model_path={model_path!r}", file=sys.stderr)
+            print(f"[VideoProcessorClass]   os.path.exists(model_path)={os.path.exists(model_path)!r}", file=sys.stderr)
+            try:
+                size = os.path.getsize(model_path)
+            except OSError as ose:
+                size = f"stat error: {ose}"
+            print(f"[VideoProcessorClass]   model_file_size_bytes={size!r}", file=sys.stderr)
+            print(f"[VideoProcessorClass]   exception_type={type(exc).__name__}", file=sys.stderr)
+            print(f"[VideoProcessorClass]   exception_msg={exc!s}", file=sys.stderr)
+            if exc.__cause__ is not None:
+                cause = exc.__cause__
+                print(f"[VideoProcessorClass]   __cause___type={type(cause).__name__}", file=sys.stderr)
+                print(f"[VideoProcessorClass]   __cause___msg={cause!s}", file=sys.stderr)
+            if exc.__context__ is not None and exc.__context__ is not exc.__cause__:
+                ctx = exc.__context__
+                print(f"[VideoProcessorClass]   __context___type={type(ctx).__name__}", file=sys.stderr)
+                print(f"[VideoProcessorClass]   __context___msg={ctx!s}", file=sys.stderr)
+            print("[VideoProcessorClass]   full traceback:", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+            sys.stderr.flush()
+            raise
 
         self._detectors = {
             "Squats": SquatDetector(),
