@@ -1,9 +1,5 @@
-
 libgl1
-libglib2.0-0
+libglib2.0-dev
 libsm6
 libxext6
-libegl1
-libgles2
-libgl1-mesa-glx
-libgl1-mesa-dri
+
