@@ -209,16 +209,24 @@ def main():
 
     st.title("AI Real-time GYM Coach")
     st.markdown("#### Real-time pose detection with proactive AI voice coaching")
- 
+
+    # Reserve stable layout slots ABOVE the WebRTC video for the voice cue and
+    # coach feedback. Keeping these two elements present on every rerun (even
+    # when empty) means the video component below never shifts position, which
+    # would otherwise unmount/remount it and kill the camera stream on each cue.
+    audio_slot = st.empty()
+    feedback_slot = st.empty()
+
+    audio_slot.empty()
     if st.session_state.get("audio_to_play"):
         try:
-            autoplay_audio(st.session_state.audio_to_play)
+            autoplay_audio(st.session_state.audio_to_play, location=audio_slot)
         finally:
             st.session_state.audio_to_play = None
 
+    feedback_slot.empty()
     if st.session_state.get("coach_feedback"):
-        st.markdown("")
-        st.success(f"🤖 **Coach:** {st.session_state.coach_feedback}")
+        feedback_slot.success(f"🤖 **Coach:** {st.session_state.coach_feedback}")
 
     if not workout_started:
         st.markdown(

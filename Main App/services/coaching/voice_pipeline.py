@@ -85,10 +85,12 @@ class VoicePipeline:
         return voice, text
     
 
-def autoplay_audio(audio_bytes):
+def autoplay_audio(audio_bytes, location=None):
     if not audio_bytes:
         return
 
-    st.markdown("<style>[data-testid='stAudio'] {display: none;}</style>", unsafe_allow_html=True)
+    target = location if location is not None else st
 
-    st.audio(audio_bytes, format="audio/mp3", autoplay=True)
+    target.markdown("<style>[data-testid='stAudio'] {display: none;}</style>", unsafe_allow_html=True)
+
+    target.audio(audio_bytes, format="audio/mp3", autoplay=True)
