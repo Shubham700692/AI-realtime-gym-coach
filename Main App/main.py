@@ -19,6 +19,9 @@ warnings.filterwarnings(
     message=r"(?s).*automatic function calling.*AFC.*generate_content.*",
 )
 
+import logging
+logging.getLogger("google.genai").setLevel(logging.ERROR)
+
 import time
 import pandas as pd
 from services.auth.login_wall import render_login_wall
@@ -209,9 +212,7 @@ def main():
  
     if st.session_state.get("audio_to_play"):
         try:
-            vp = st.session_state.get("voice_pipeline")
-            audio_key = vp.next_cue_key() if vp is not None else f"coach-audio-{int(time.time()*1000)}"
-            autoplay_audio(st.session_state.audio_to_play, key=audio_key)
+            autoplay_audio(st.session_state.audio_to_play)
         finally:
             st.session_state.audio_to_play = None
 

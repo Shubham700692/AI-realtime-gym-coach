@@ -7,11 +7,6 @@ class VoicePipeline:
         self.llm = llm
         self.tts = tts
         self.last_spoken_at = 0
-        self._cue_counter = 0
-
-    def next_cue_key(self):
-        self._cue_counter += 1
-        return f"coach-audio-{int(time.time()*1000)}-{self._cue_counter}"
 
     def _find_form_issue(self, exercise, metrics):
         if "issue" in metrics:
@@ -90,10 +85,10 @@ class VoicePipeline:
         return voice, text
     
 
-def autoplay_audio(audio_bytes, key=None):
+def autoplay_audio(audio_bytes):
     if not audio_bytes:
         return
 
     st.markdown("<style>[data-testid='stAudio'] {display: none;}</style>", unsafe_allow_html=True)
 
-    st.audio(audio_bytes, format="audio/mp3", autoplay=True, key=key)
+    st.audio(audio_bytes, format="audio/mp3", autoplay=True)
