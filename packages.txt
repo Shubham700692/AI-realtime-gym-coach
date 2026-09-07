@@ -1,2 +1,7 @@
 libgl1
 libglib2.0-0t64
+libasound2
+libegl1
+libopengl0
+libglx0
+libxkbcommon0

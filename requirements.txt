@@ -22,9 +22,9 @@ streamlit>=1.35.0
 streamlit-webrtc>=0.47.0
 
 # Computer Vision & AI Pose Tracking (Headless Native Stack)
-mediapipe>=0.10.14
-opencv-python-headless>=4.10.0.84
-opencv-contrib-python-headless>=4.10.0.84
+mediapipe==0.10.18
+opencv-python-headless==4.10.0.84
+opencv-contrib-python-headless==4.10.0.84
 
 # Data Processing & Environment
 pandas>=2.2.0
